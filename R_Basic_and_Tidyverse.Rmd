@@ -1,0 +1,576 @@
+---
+title: "ETC1010-week2"
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    pandoc_args: ["--extract-media", "."]
+    includes:
+      header-includes: \usepackage{xeCJK}
+    keep_tex: yes
+    latex_engine: xelatex
+CJKmainfont: Songti SC
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## How to start
+
+开始用R的基本步骤：
+
+  1. 创建Project
+  2. 创建R Script / R Markdown
+  3. 把需要用的文档放到自己的project文件夹里
+
+这里常用的function有：
+
+  `setwd()` 用来直接set working directory, 但由于每个人电脑的设置都不一样，直接`setwd()`可能会造成很多问题。
+  
+  `help()` 用来提取你的某个文件的路径，或者提取你的working directory。
+  相比`setwd()`来说，这种方法保证你可以准确找到自己文件的文件路径，不会因为和别人的不一样而造成麻烦。
+  
+例子：
+
+```{r eval = FALSE}
+# setwd("/Users/oryashu/Desktop/work")
+```
+
+```{r}
+library(here)
+here("move_au.csv")
+here("data", "move_au.csv")
+```
+
+## R Markdown 的基本操作
+
+1. 什么是Markdown
+
+2. 为什么要用Markdown
+
+3. Markdown可以做哪些事情
+
+
+
+## R的入门语法和变量
+
+```{r echo = FALSE}
+knitr::include_graphics("https://cdn.mathpix.com/snip/images/GxsloAqjaal_MmYXR4LhzkyqS3c7_pAJ0AytCkYAZ9w.original.fullsize.png")
+```
+
+### Atomic Vectors:
+
+#### 1. Logical
+  
+```{r}
+logical.v <- c(TRUE, FALSE)
+logical.v
+typeof(logical.v)
+is.logical(logical.v)
+```
+
+  
+#### 2. Numeric (integer, double)
+  
+```{r}
+integer.v <- 1:3
+double.v <- c(1.0, 2.0, 3.0)
+
+integer.v
+double.v
+
+typeof(integer.v)
+typeof(double.v)
+
+is.integer(integer.v)
+is.double(double.v)
+
+is.integer(double.v)
+is.double(integer.v)
+
+is.numeric(integer.v)
+is.numeric(double.v)
+```
+
+#### 3. Charactor
+
+```{r}
+string <- "example"
+string
+typeof(string)
+is.character(string)
+```
+
+### List:
+
+一个List可以包含以上所有atomic vector type，当然也可以在list中包含其他的list
+
+```{r}
+example <- list(a = 1, b = TRUE, c = "example", d = list(aaa = 0, bbb = 2))
+```
+
+
+### Matrix:
+
+List的集合体。有了row和column的概念
+
+Data frame本质上也是matrix
+
+```{r}
+sample_matrix <- matrix(nrow = 2, ncol = 3, data = c(1,2,3,4,5,6))
+colnames(sample_matrix) <- c("col1", "col2", "col3")
+
+sample_matrix
+
+rownames(sample_matrix) <- c("row1", "row2")
+
+sample_matrix["row2","col3"]
+```
+
+### Table:
+
+#### Data Frame:
+
+```{r}
+df1 <- data.frame(col1 = c(1,2,3,4), col2 = c(5,6,7,8))
+df1
+rownames(df1) <- c("#1", "#2", "#3", "#4")
+df1
+```
+
+matrix和data frame也能互相转换,但data frame一定有column name，matrix不一定有：
+
+```{r}
+matrix(nrow = 2, ncol = 3, data = c(1,2,3,4,5,6)) %>% as.data.frame()
+```
+
+
+
+#### Tibble:
+
+```{r}
+tbl1 <- tibble(col1 = c(1,2,3,4), col2 = c(5,6,7,8))
+tbl1
+rownames(tbl1) <- c("aaa", "bbb", "#3", "#4") # tibble不能设置row name
+tbl1
+
+df1$col1
+```
+
+
+tibble数据与data.frame数据相比主要在以下两个方面有所不同：
+
+  - 打印输出
+
+tibble数据输出到console上只会显示前10行，和所有列；这对于大数据量而言是十分有益的
+
+举例：
+
+```{r}
+load("data/ao_training.rda")
+ao_tr # this is a tibble
+```
+
+```{r eval = FALSE}
+ao_tr %>% as.data.frame() # 在console中显示不一样
+```
+
+如果想获取更详细的信息，使用`str()`函数来提取
+如果想明确输出具体的打印信息，可以在`print()`函数中设置n=#和width=Inf，分别对应行和列的数量；
+当然还可以设定默认打印输出的参数，主要有以下三个选项可供修改：
+
+```{r eval = FALSE}
+# 最大最小打印值
+options(tibble.print_max = m, tibble.print_min = n)
+        
+# 输出所有行
+options(dplyr.print_min = Inf)
+
+# 输出所有列
+options(tibble.width = Inf)
+```
+
+  - 子集索引
+
+tibble索引与传统data.frame格式索引一致，主要差别在：
+tibble数据使用的是严谨的全部匹配，如果试图索引一个不存在的列，其会生成警告。
+这个特点对于处理数据是十分关键的，如果在处理数据时不知道自己索引了不存在的列，将是十分致命的。
+
+```{r}
+df1$aaa # data frame索引不存在的列不会生成警告
+```
+
+```{r}
+tbl1$aaa # tibble会生成警告
+```
+
+
+### Missing Values
+
+```{r}
+NA            # logical
+NA_integer_   # integer
+NA_real_      # double
+NA_character_ # character
+
+typeof(NA_integer_)
+
+c(1,2,3,NA,5)
+```
+
+### NULL
+
+空值，和missing value是不一样的。
+
+NULL is often used to represent the absence of a vector (as opposed to NA which is used to represent the absence of a value in a vector). 
+
+NULL typically behaves like a vector of length 0. 
+
+
+### Test functions
+
+```{r echo = FALSE}
+knitr::include_graphics("https://cdn.mathpix.com/snip/images/KuPNTLB2BuHhxzQx574UNH1YHVeDGMtjwwMu4bn9CeI.original.fullsize.png")
+```
+
+
+
+## Operators
+
+### R Arithmetic Operators
+
+`+`:	Addition
+
+`–`:	Subtraction
+
+`*`:	Multiplication
+
+`/`:	Division
+
+`^`:	Exponent
+
+`%%`:	Modulus (Remainder from division)
+
+`%/%`:	Integer Division
+
+
+### R Relation Operators
+
+`<`:	Less than
+
+`>`:	Greater than
+
+`<=`:	Less than or equal to
+
+`>=`:	Greater than or equal to
+
+`==`:	Equal to
+
+`!=`:	Not equal to
+
+
+### R Logical Operators
+
+`!`:	Logical NOT
+
+`&`:	Element-wise logical AND
+
+`&&`:	Logical AND
+
+`|`:	Element-wise logical OR
+
+`||`:	Logical OR
+
+
+Operators & and | perform element-wise operation producing result having length of the longer operand.
+
+But && and || examines only the first element of the operands resulting into a single length logical vector.
+
+Zero is considered FALSE and non-zero numbers are taken as TRUE. An example run.
+
+### R Assignment Operators
+
+`<-`, `<<-`, `=`:	Leftwards assignment
+
+`->`, `->>`:	Rightwards assignment
+
+
+The operators <- and = can be used, almost interchangeably, to assign to variable in the same environment.
+
+The <<- operator is used for assigning to variables in the parent environments (more like global assignments). The rightward assignments, although available are rarely used.
+
+
+## Tidyverse
+
+```{r}
+library(tidyverse)
+```
+
+── Attaching packages ───────────────────────────────────────────────────────────────────────── tidyverse 1.3.0 ──
+✓ ggplot2 3.3.2     ✓ purrr   0.3.4
+✓ tibble  3.0.2     ✓ dplyr   1.0.0
+✓ tidyr   1.1.0     ✓ stringr 1.4.0
+✓ readr   1.3.1     ✓ forcats 0.5.0
+── Conflicts ──────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+x dplyr::filter() masks stats::filter()
+x dplyr::lag()    masks stats::lag()
+
+Tidyverse其实是个集成包
+
+### The Pipe
+
+`%>%` Pipes are a powerful tool for clearly expressing a sequence of multiple operations. 
+
+*Shortcut: Cmd + Shift + m (mac), Ctrl + shift + m (Windows)*
+
+code chunk: cmd + option + i
+
+
+#### 1.基本用法
+
+```{r eval = FALSE}
+x %>% f # 等价于 f(x)
+x %>% f(y) # 等价于 f(x, y)
+x %>% f %>% g %>% h  # 等价于 h(g(f(x)))
+x %>% f(y, .) # 等价于 f(y, x)
+x %>% f(y, z = .) # 等价于 f(y, z = x)
+```
+
+如果数据作为函数的第一个参数的话，是不需要placeholder的，但是如果是第二或者更后面的参数，就需要使用 . 作为占位符。
+
+#### 2.构建函数
+
+```{r eval = FALSE}
+f <- . %>% cos %>% sin # 等价为 f <- function(.) sin(cos(.)) 
+```
+
+#### 3.%>%, %$% 和 %<>%的用法
+
+%>%是最常用的一种前向管道符。
+
+%<>%是表示将变量传入函数，得到的结果返回给原来的变量
+
+```{r eval = FALSE}
+iris %<>% na.omit() # 等价于 iris<-na.omit(iris)
+```
+
+%$%是使用变量的name来表示该变量下name的数值
+
+```{r eval = FALSE}
+df<-data.frame("a"=c(1,2,3), "b"=c(4,5,6))
+cor(df$a, df$b) # 等价于 df %$% cor(a,b)
+```
+
+
+### Data manipulating
+
+```{r}
+sample <- read_csv("data/move_au.csv")
+sample
+```
+
+##### filter(): 
+
+用条件来选择符合条件的observation
+
+```{r}
+sample %>% filter(sub_region_1 == "Victoria")
+sample[sample$sub_region_1 == "Victoria",]
+```
+
+##### select(): 
+
+选择指定的column
+
+```{r}
+sample %>% select(sub_region_1, date, retail_and_recreation_percent_change_from_baseline)
+sample %>% select(c(2:4))
+sample %>% select(-c(2:4))
+sample %>% select(-c("sub_region_1", "date", "retail_and_recreation_percent_change_from_baseline"))
+sample[, c("sub_region_1", "date", "retail_and_recreation_percent_change_from_baseline")]
+
+```
+
+##### mutate(): 
+
+对column进行操作，如对整个列进行加减乘除等
+
+```{r}
+sample %>% 
+  mutate(aaa = retail_and_recreation_percent_change_from_baseline + grocery_and_pharmacy_percent_change_from_baseline)
+```
+
+##### summarise(): 
+
+对数据进行整和(aggregate)，即对指定列的所有observation进行整和，如sum某一列所有的数值，或求出某一列所有数值的平均值等。输出的数据为一个单一的结果，并生成一个新的output，不在原数据上做改动，和mutate区分。
+
+```{r}
+sample %>% summarise(sum_retail = sum(retail_and_recreation_percent_change_from_baseline),
+                     sum_grocery = sum(grocery_and_pharmacy_percent_change_from_baseline))
+```
+
+##### arrange(): 
+
+对数据以某一列进行排序，有正序排序acending和倒序排序descending之分
+
+```{r}
+sample %>% arrange(retail_and_recreation_percent_change_from_baseline) # 默认为ascending order
+sample %>% arrange(desc(retail_and_recreation_percent_change_from_baseline), grocery_and_pharmacy_percent_change_from_baseline)
+```
+
+##### group_by(): 
+
+以指定的categorical变量为分组标准进行分组。一般与filter()、summarise()和count()一起使用
+
+```{r}
+sample %>% 
+  group_by(sub_region_1) %>% 
+  summarise(sum_retail = sum(retail_and_recreation_percent_change_from_baseline),
+            sum_grocery = sum(grocery_and_pharmacy_percent_change_from_baseline))
+```
+
+##### count(): 
+
+计算observation的个数。一般与group_by()和distinct()结合使用。
+
+```{r}
+sample %>% 
+  group_by(sub_region_1) %>%
+  count
+
+sample %>% 
+  distinct(sub_region_1) %>% count
+
+unique(sample$sub_region_1) %>% length # distinct和unique区分
+
+sample %>% 
+  group_by(sub_region_1) %>%
+  distinct(retail_and_recreation_percent_change_from_baseline) %>%
+  count
+```
+
+
+### Tidy data
+
+There are three interrelated rules which make a dataset tidy:
+
+  1. Each variable must have its own column.
+  2. Each observation must have its own row.
+  3. Each value must have its own cell.
+
+```{r echo = FALSE}
+knitr::include_graphics("https://cdn.mathpix.com/snip/images/b4HXbBsRaR0PSyPohgXDQZzD5jo1bWCcY5FfEAvju4I.original.fullsize.png")
+```
+
+These three rules are interrelated because it’s impossible to only satisfy two of the three. That interrelationship leads to an even simpler set of practical instructions:
+
+  1. Put each dataset in a tibble.
+  2. Put each variable in a column.
+  
+首先要清楚一个正确的tidy data应该长什么样子。假设我们有几个不同的variable，和许多的observation，那么每个variable应该在column，observadion在row。而variable中的category，则应该体现在对应variable的那一列中，不应该分出来自成一列（category作为variable）。而几个variable也不能合并在同一列。即tidy是一个variable单独作为一列，variable的不同category从属于对应的variable，在同一列出现，对应的observation在每一行。
+
+#### pivot_long(): 将数据变长
+
+```{r}
+table4a
+```
+
+这个数据不tidy的原因是我们知道1999和2000都是在说year，而year应作为一个variable，所以这个数据违反了我们刚才说的每个variable（country和year）在一列出现，并且category（country有3个category，year有1999和2000两个category）在列里面出现。那么我们需要进行的操作是将1999这一列和2000这里列合并成一列，叫做year。并应该把这两列的数值作为我们的value。
+
+```{r echo = FALSE}
+knitr::include_graphics("https://cdn.mathpix.com/snip/images/RA6yCRBdVEINvyNrCIVhCRZxNeTJDm7ewxEW7wDMRWg.original.fullsize.png")
+```
+
+
+```{r}
+table4a %>% 
+  pivot_longer(c(`1999`, `2000`), names_to = "year", values_to = "cases")
+```
+
+这种情况下，整合后的数据会变得比原来长，所以叫pivot_longer
+
+#### pivot_wider(): 将数据变宽
+
+```{r}
+table2
+```
+
+第二种不tidy的类型是，本应在两个column出现的两个独立的variable，在同一列里作为category出现了。如sample中type一列，我们的cases和population应该是两个variable而不是category，他们不从属于同一个变量，所以应该是作为两个分别的column呈现在数据里的。这里我们要从type中分离开cases和population两个变量。
+
+```{r echo = FALSE}
+knitr::include_graphics("https://cdn.mathpix.com/snip/images/kiWAfooPqI28ItVuRN7QgrI-OvCXsGEEfcl2fgnZjfs.original.fullsize.png")
+```
+
+```{r}
+table2 %>%
+    pivot_wider(names_from = type, values_from = count)
+```
+
+这种情况下，因为把原本混在一起的那一列分成了多列，数据的列会比以前多，也就是变宽，所以叫做pivot_wider
+
+#### separate(): 分离一串数据（分离字符）
+
+separate其实并不是数据本身variable的定义出了问题，一般来说separate解决的问题是字符串混在了一起的问题。举例：
+
+```{r}
+table3
+```
+
+这里的rate表示成了刚才example中的cases除以population。本意是好的，但是这个数据是作为character来出现的。我们知道只有numerical的数据才能进行加减乘除操作，所以我们需要的是两个numerical variable，需要让电脑能去计算，而不是仅仅在两个数之间加一个"/"。那么这里的问题就是，应该作为两列出现的数值，被混成了一列字符串。要注意这个与刚才的pivot_wider的例子是不一样的，上面那种他的字符串本身不是混在一起的。那么我们需要将每一串数字以中间的"/"作为分隔符来分开，之后我们如果想让电脑帮我们两列相除，用刚刚学过的mutate就可以做到了。
+
+```{r echo = FALSE}
+knitr::include_graphics("https://cdn.mathpix.com/snip/images/qVOaeUFXhs-KQMHLgG93SrmQWtnC7_IAd9Ud7kvC6DU.original.fullsize.png")
+```
+
+```{r}
+table3 %>% 
+  separate(rate, into = c("cases", "population"), sep = "/" , convert = TRUE)
+```
+
+`convert = TRUE`可以给分出的variable自动转化成合理的type
+
+`sep = ...`的argument，可以指定符号，也可以指定从具体第几个符号开始分割。举个用固定位数来分割的例子：
+
+```{r}
+table3 %>% 
+  separate(year, into = c("century", "year"), sep = -1)
+```
+
+
+#### unite(): 将两串数据合并成一串（separate的相反操作）
+
+unite是separate的反向操作，即把两列字符合并成一列。
+
+```{r echo = FALSE}
+knitr::include_graphics("https://cdn.mathpix.com/snip/images/Ee1wxvyDUKuM7rH5GWHfStVyKuTNnxCES7dj4ZgLImI.original.fullsize.png")
+```
+
+如把century和year合并起来变成年份，就是unite的操作。
+
+```{r}
+table5 %>% 
+  unite(new, century, year, sep = "")
+```
+
+这里的sep是合并后两串字符间的分隔符。可以自由指定，视情况而定。
+
+
+##### 总结：
+
+pivot_longer, pivot_wider是由于data的variable和category放的位置不对而导致的非tidy data
+
+separate和unite是由于字符串的合并、分离导致的不tidy，和category没有关系。
+
+
+
+
+
+
+
+
+
+
+
+
