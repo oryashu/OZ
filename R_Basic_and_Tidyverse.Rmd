@@ -1,5 +1,5 @@
 ---
-title: "ETC1010-week2"
+title: "R Basic and Tidyverse"
 output:
   html_document:
     df_print: paged
